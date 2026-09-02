@@ -350,7 +350,10 @@ export class KodyRulesService implements IKodyRulesService {
                 }
             }
         } else {
-            // Free plan: enforce MAX_KODY_RULES (10) active ceiling
+            // Free plan: enforce the MAX_KODY_RULES active ceiling.
+            // DevHome self-host fork: MAX_KODY_RULES is +Infinity, so this
+            // branch is a no-op (activeCount > Infinity is never true) — no
+            // rule is ever auto-paused as lockedByPlan on our instance.
             const MAX = this.kodyRulesValidationService.MAX_KODY_RULES;
             let activeCount = 0;
 

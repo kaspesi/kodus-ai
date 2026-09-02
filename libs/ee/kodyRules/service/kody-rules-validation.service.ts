@@ -21,7 +21,16 @@ import { Injectable } from '@nestjs/common';
  */
 @Injectable()
 export class KodyRulesValidationService {
-    public readonly MAX_KODY_RULES = 10;
+    // DevHome self-host fork change: the upstream free/CE plan caps Kody Rules
+    // at 10 (self-hosted installs without a license resolve to `limited=true`
+    // via PermissionValidationService.shouldLimitResources). We run our own
+    // self-hosted instance and want an UNLIMITED number of always-active rules,
+    // so the ceiling is raised to +Infinity. This single constant neutralizes
+    // every consumer of the cap without touching the shared plan/billing gate:
+    //   • validateRulesLimit → `totalRules <= Infinity` is always true (never rejects),
+    //   • syncRulesWithPlanLimit → `activeCount > Infinity` is never true (never auto-pauses / stamps lockedByPlan),
+    //   • filterKodyRules → limit=Infinity → `slice(0, Infinity)` returns every enforced rule.
+    public readonly MAX_KODY_RULES = Number.POSITIVE_INFINITY;
     private readonly isCloud: boolean;
 
     constructor(

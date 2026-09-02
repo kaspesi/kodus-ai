@@ -54,7 +54,9 @@ describe('KodyRulesValidationService', () => {
             expect(result).toBe(true);
         });
 
-        it('returns false when enforced limit is exceeded', async () => {
+        it('still allows rules even when resource limits ARE enforced (self-host cap removed)', async () => {
+            // DevHome self-host fork: MAX_KODY_RULES is +Infinity, so even a
+            // `limited=true` org (self-hosted CE) can add any number of rules.
             shouldLimitResourcesMock.mockResolvedValue(true);
 
             const result = await service.validateRulesLimit(
@@ -62,26 +64,21 @@ describe('KodyRulesValidationService', () => {
                 11,
             );
 
-            expect(result).toBe(false);
+            expect(result).toBe(true);
         });
 
-        it('allows exactly MAX_KODY_RULES (10) at the boundary', async () => {
-            // The ceiling is inclusive (`<= 10`): the 10th rule is allowed,
-            // only the 11th is rejected. Pins the off-by-one boundary.
+        it('never rejects at any count when limits are enforced (unlimited ceiling)', async () => {
+            // The ceiling is +Infinity, so there is no boundary to reject at —
+            // arbitrarily large rule counts remain allowed.
             shouldLimitResourcesMock.mockResolvedValue(true);
 
             expect(
                 await service.validateRulesLimit(
                     { organizationId: 'org-1' } as any,
-                    service.MAX_KODY_RULES,
+                    10_000,
                 ),
             ).toBe(true);
-            expect(
-                await service.validateRulesLimit(
-                    { organizationId: 'org-1' } as any,
-                    service.MAX_KODY_RULES + 1,
-                ),
-            ).toBe(false);
+            expect(service.MAX_KODY_RULES).toBe(Number.POSITIVE_INFINITY);
         });
     });
 
